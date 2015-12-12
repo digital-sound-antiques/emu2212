@@ -10,6 +10,7 @@
   2002 03-02 : Version 1.12 -- Removed SCC_init & SCC_close.
   2003 09-19 : Version 1.13 -- Added SCC_setMask() and SCC_toggleMask()
   2004 10-21 : Version 1.14 -- Fixed the problem where SCC+ is disabled.
+  2015 12-13 : Version 1.15 -- Changed own integer types to C99 stdint.h types.
 
   Registar map for SCC_writeReg()
 
@@ -54,20 +55,20 @@ internal_refresh (SCC * scc)
   if (scc->quality)
   {
     scc->base_incr = 2 << GETA_BITS;
-    scc->realstep = (e_uint32) ((1 << 31) / scc->rate);
-    scc->sccstep = (e_uint32) ((1 << 31) / (scc->clk / 2));
+    scc->realstep = (uint32_t) ((1 << 31) / scc->rate);
+    scc->sccstep = (uint32_t) ((1 << 31) / (scc->clk / 2));
     scc->scctime = 0;
   }
   else
   {
-    scc->base_incr = (e_uint32) ((double) scc->clk * (1 << GETA_BITS) / scc->rate);
+    scc->base_incr = (uint32_t) ((double) scc->clk * (1 << GETA_BITS) / scc->rate);
   }
 }
 
-EMU2212_API e_uint32
-SCC_setMask (SCC *scc, e_uint32 mask)
+uint32_t
+SCC_setMask (SCC *scc, uint32_t mask)
 {
-  e_uint32 ret = 0;
+  uint32_t ret = 0;
   if(scc)
   {
     ret = scc->mask;
@@ -76,10 +77,10 @@ SCC_setMask (SCC *scc, e_uint32 mask)
   return ret;
 }
 
-EMU2212_API e_uint32
-SCC_toggleMask (SCC *scc, e_uint32 mask)
+uint32_t
+SCC_toggleMask (SCC *scc, uint32_t mask)
 {
-  e_uint32 ret = 0;
+  uint32_t ret = 0;
   if(scc)
   {
     ret = scc->mask;
@@ -88,22 +89,22 @@ SCC_toggleMask (SCC *scc, e_uint32 mask)
   return ret;
 }
 
-EMU2212_API void
-SCC_set_quality (SCC * scc, e_uint32 q)
+void
+SCC_set_quality (SCC * scc, uint32_t q)
 {
   scc->quality = q;
   internal_refresh (scc);
 }
 
-EMU2212_API void
-SCC_set_rate (SCC * scc, e_uint32 r)
+void
+SCC_set_rate (SCC * scc, uint32_t r)
 {
   scc->rate = r ? r : 44100;
   internal_refresh (scc);
 }
 
-EMU2212_API SCC *
-SCC_new (e_uint32 c, e_uint32 r)
+SCC *
+SCC_new (uint32_t c, uint32_t r)
 {
   SCC *scc;
 
@@ -119,7 +120,7 @@ SCC_new (e_uint32 c, e_uint32 r)
   return scc;
 }
 
-EMU2212_API void
+void
 SCC_reset (SCC * scc)
 {
   int i, j;
@@ -161,18 +162,18 @@ SCC_reset (SCC * scc)
   return;
 }
 
-EMU2212_API void
+void
 SCC_delete (SCC * scc)
 {
   if (scc != NULL)
     free (scc);
 }
 
-INLINE static e_int16
+static inline int16_t
 calc (SCC * scc)
 {
   int i;
-  e_int32 mix = 0;
+  int32_t mix = 0;
 
   for (i = 0; i < 5; i++)
   {
@@ -190,14 +191,14 @@ calc (SCC * scc)
     {
       scc->phase[i] = ((scc->count[i] >> (GETA_BITS)) + scc->offset[i]) & 0x1F;
       if(!(scc->mask&SCC_MASK_CH(i)))
-        mix += ((((e_int8) (scc->wave[i][scc->phase[i]]) * (e_int8) scc->volume[i]))) >> 4;
+        mix += ((((int8_t) (scc->wave[i][scc->phase[i]]) * (int8_t) scc->volume[i]))) >> 4;
     }
   }
 
-  return (e_int16) (mix << 4);
+  return (int16_t) (mix << 4);
 }
 
-EMU2212_API e_int16
+int16_t
 SCC_calc (SCC * scc)
 {
   if (!scc->quality)
@@ -211,13 +212,13 @@ SCC_calc (SCC * scc)
   }
 
   scc->scctime -= scc->realstep;
-  scc->out = (e_int16) (((double) scc->next * (scc->sccstep - scc->scctime) + (double) scc->prev * scc->scctime) / scc->sccstep);
+  scc->out = (int16_t) (((double) scc->next * (scc->sccstep - scc->scctime) + (double) scc->prev * scc->scctime) / scc->sccstep);
 
-  return (e_int16) (scc->out);
+  return (int16_t) (scc->out);
 }
 
-EMU2212_API e_uint32
-SCC_readReg (SCC * scc, e_uint32 adr)
+uint32_t
+SCC_readReg (SCC * scc, uint32_t adr)
 {
   if (adr < 0xA0)
     return scc->wave[adr >> 5][adr & 0x1f];
@@ -227,11 +228,11 @@ SCC_readReg (SCC * scc, e_uint32 adr)
     return 0;
 }
 
-EMU2212_API void
-SCC_writeReg (SCC * scc, e_uint32 adr, e_uint32 val)
+void
+SCC_writeReg (SCC * scc, uint32_t adr, uint32_t val)
 {
   int ch;
-  e_uint32 freq;
+  uint32_t freq;
 
   adr &= 0xFF;
 
@@ -240,9 +241,9 @@ SCC_writeReg (SCC * scc, e_uint32 adr, e_uint32 val)
     ch = (adr & 0xF0) >> 5;
     if (!scc->rotate[ch])
     {
-      scc->wave[ch][adr & 0x1F] = (e_int8) val;
+      scc->wave[ch][adr & 0x1F] = (int8_t) val;
       if (scc->mode == 0 && ch == 3)
-        scc->wave[4][adr & 0x1F] = (e_int8) val;
+        scc->wave[4][adr & 0x1F] = (int8_t) val;
     }
   }
   else if (0xC0 <= adr && adr <= 0xC9)
@@ -269,17 +270,17 @@ SCC_writeReg (SCC * scc, e_uint32 adr, e_uint32 val)
   else if (0xD0 <= adr && adr <= 0xD4)
   {
     scc->reg[adr-0xC0] = val;
-    scc->volume[adr & 0x0F] = (e_uint8) (val & 0xF);
+    scc->volume[adr & 0x0F] = (uint8_t) (val & 0xF);
   }
   else if (adr == 0xE0)
   {
     scc->reg[adr-0xC0] = val;
-    scc->mode = (e_uint8) val & 1;
+    scc->mode = (uint8_t) val & 1;
   }
   else if (adr == 0xE1)
   {
     scc->reg[adr-0xC0] = val;
-    scc->ch_enable_next = (e_uint8) val & 0x1F;
+    scc->ch_enable_next = (uint8_t) val & 0x1F;
   }
   else if (adr == 0xE2)
   {
@@ -300,8 +301,8 @@ SCC_writeReg (SCC * scc, e_uint32 adr, e_uint32 val)
   return;
 }
 
-INLINE static void
-write_standard (SCC * scc, e_uint32 adr, e_uint32 val)
+static inline void
+write_standard (SCC * scc, uint32_t adr, uint32_t val)
 {
   adr &= 0xFF;
 
@@ -327,8 +328,8 @@ write_standard (SCC * scc, e_uint32 adr, e_uint32 val)
   }
 }
 
-INLINE static void
-write_enhanced (SCC * scc, e_uint32 adr, e_uint32 val)
+static inline void
+write_enhanced (SCC * scc, uint32_t adr, uint32_t val)
 {
   adr &= 0xFF;
 
@@ -354,8 +355,8 @@ write_enhanced (SCC * scc, e_uint32 adr, e_uint32 val)
   }
 }
 
-INLINE static e_uint32 
-read_enhanced (SCC * scc, e_uint32 adr)
+static inline uint32_t 
+read_enhanced (SCC * scc, uint32_t adr)
 {
   adr &= 0xFF;
   if (adr < 0xA0)
@@ -372,8 +373,8 @@ read_enhanced (SCC * scc, e_uint32 adr)
     return 0;
 }
 
-INLINE static e_uint32
-read_standard (SCC * scc, e_uint32 adr)
+static inline uint32_t
+read_standard (SCC * scc, uint32_t adr)
 {
   adr &= 0xFF;
   if(adr<0x80)
@@ -391,8 +392,8 @@ read_standard (SCC * scc, e_uint32 adr)
   else return 0;
 }
 
-EMU2212_API e_uint32
-SCC_read (SCC * scc, e_uint32 adr)
+uint32_t
+SCC_read (SCC * scc, uint32_t adr)
 {
   if( scc->type == SCC_ENHANCED && (adr&0xFFFE) == 0xBFFE ) 
     return (scc->base_adr>>8)&0x20;
@@ -425,8 +426,8 @@ SCC_read (SCC * scc, e_uint32 adr)
   return 0;
 }
 
-EMU2212_API void
-SCC_write (SCC * scc, e_uint32 adr, e_uint32 val)
+void
+SCC_write (SCC * scc, uint32_t adr, uint32_t val)
 {
   val = val & 0xFF;
 
@@ -478,8 +479,8 @@ SCC_write (SCC * scc, e_uint32 adr, e_uint32 val)
   return;
 }
 
-EMU2212_API void
-SCC_set_type (SCC * scc, e_uint32 type)
+void
+SCC_set_type (SCC * scc, uint32_t type)
 {
   scc->type = type;
 }

@@ -1,19 +1,9 @@
 #ifndef _EMU2212_H_
 #define _EMU2212_H_
 
-#ifdef EMU2212_DLL_EXPORTS
-  #define EMU2212_API __declspec(dllexport)
-#elif defined(EMU2212_DLL_IMPORTS)
-  #define EMU2212_API __declspec(dllimport)
-#else
-  #define EMU2212_API
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
-#include "emutypes.h"
 
 #define SCC_STANDARD 0
 #define SCC_ENHANCED 1
@@ -22,29 +12,29 @@ extern "C" {
 
 typedef struct __SCC {
 
-  e_uint32 clk, rate ,base_incr, quality ;
+  uint32_t clk, rate ,base_incr, quality ;
 
-  e_int32 out, prev, next;
-  e_uint32 type ;
-  e_uint32 mode ;
-  e_uint32 active;
-  e_uint32 base_adr;
-  e_uint32 mask ;
+  int32_t out, prev, next;
+  uint32_t type ;
+  uint32_t mode ;
+  uint32_t active;
+  uint32_t base_adr;
+  uint32_t mask ;
   
-  e_uint32 realstep ;
-  e_uint32 scctime ;
-  e_uint32 sccstep ;
+  uint32_t realstep ;
+  uint32_t scctime ;
+  uint32_t sccstep ;
 
-  e_uint32 incr[5] ;
+  uint32_t incr[5] ;
 
-  e_int8  wave[5][32] ;
+  int8_t  wave[5][32] ;
 
-  e_uint32 count[5] ;
-  e_uint32 freq[5] ;
-  e_uint32 phase[5] ;
-  e_uint32 volume[5] ;
-  e_uint32 offset[5] ;
-  e_uint8 reg[0x100-0xC0];
+  uint32_t count[5] ;
+  uint32_t freq[5] ;
+  uint32_t phase[5] ;
+  uint32_t volume[5] ;
+  uint32_t offset[5] ;
+  uint8_t reg[0x100-0xC0];
 
   int ch_enable ;
   int ch_enable_next ;
@@ -57,18 +47,18 @@ typedef struct __SCC {
 } SCC ;
 
 
-EMU2212_API SCC *SCC_new(e_uint32 c, e_uint32 r) ;
-EMU2212_API void SCC_reset(SCC *scc) ;
-EMU2212_API void SCC_set_rate(SCC *scc, e_uint32 r);
-EMU2212_API void SCC_set_quality(SCC *scc, e_uint32 q) ;
-EMU2212_API void SCC_set_type(SCC *scc, e_uint32 type) ;
-EMU2212_API void SCC_delete(SCC *scc) ;
-EMU2212_API e_int16 SCC_calc(SCC *scc) ;
-EMU2212_API void SCC_write(SCC *scc, e_uint32 adr, e_uint32 val) ;
-EMU2212_API void SCC_writeReg(SCC *scc, e_uint32 adr, e_uint32 val) ;
-EMU2212_API e_uint32 SCC_read(SCC *scc, e_uint32 adr) ;
-EMU2212_API e_uint32 SCC_setMask(SCC *scc, e_uint32 adr) ;
-EMU2212_API e_uint32 SCC_toggleMask(SCC *scc, e_uint32 adr) ;
+SCC *SCC_new(uint32_t c, uint32_t r) ;
+void SCC_reset(SCC *scc) ;
+void SCC_set_rate(SCC *scc, uint32_t r);
+void SCC_set_quality(SCC *scc, uint32_t q) ;
+void SCC_set_type(SCC *scc, uint32_t type) ;
+void SCC_delete(SCC *scc) ;
+int16_t SCC_calc(SCC *scc) ;
+void SCC_write(SCC *scc, uint32_t adr, uint32_t val) ;
+void SCC_writeReg(SCC *scc, uint32_t adr, uint32_t val) ;
+uint32_t SCC_read(SCC *scc, uint32_t adr) ;
+uint32_t SCC_setMask(SCC *scc, uint32_t adr) ;
+uint32_t SCC_toggleMask(SCC *scc, uint32_t adr) ;
 
 #ifdef __cplusplus
 }

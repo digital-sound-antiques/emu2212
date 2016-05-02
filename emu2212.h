@@ -1,6 +1,8 @@
 #ifndef _EMU2212_H_
 #define _EMU2212_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

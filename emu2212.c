@@ -1,6 +1,6 @@
 /****************************************************************************
 
-  emu2212.c -- S.C.C. emulator by Mitsutaka Okazaki 2001
+  emu2212.c -- S.C.C. emulator by Mitsutaka Okazaki 2001-2016
 
   2001 09-30 : Version 1.00
   2001 10-03 : Version 1.01 -- Added SCC_set_quality().
@@ -11,6 +11,7 @@
   2003 09-19 : Version 1.13 -- Added SCC_setMask() and SCC_toggleMask()
   2004 10-21 : Version 1.14 -- Fixed the problem where SCC+ is disabled.
   2015 12-13 : Version 1.15 -- Changed own integer types to C99 stdint.h types.
+  2016 09-06 : Version 1.16 -- Support per-channel output.
 
   Registar map for SCC_writeReg()
 
@@ -142,6 +143,7 @@ SCC_reset (SCC * scc)
     scc->volume[i] = 0;
     scc->offset[i] = 0;
     scc->rotate[i] = 0;
+    scc->ch_out[i] = 0;
   }
 
   memset(scc->reg,0,0x100-0xC0);
@@ -156,8 +158,6 @@ SCC_reset (SCC * scc)
   scc->refresh = 0;
 
   scc->out = 0;
-  scc->prev = 0;
-  scc->next = 0;
 
   return;
 }
@@ -169,11 +169,10 @@ SCC_delete (SCC * scc)
     free (scc);
 }
 
-static inline int16_t
-calc (SCC * scc)
+static inline void
+update_output (SCC * scc)
 {
   int i;
-  int32_t mix = 0;
 
   for (i = 0; i < 5; i++)
   {
@@ -190,31 +189,37 @@ calc (SCC * scc)
     if (scc->ch_enable & (1 << i))
     {
       scc->phase[i] = ((scc->count[i] >> (GETA_BITS)) + scc->offset[i]) & 0x1F;
-      if(!(scc->mask&SCC_MASK_CH(i)))
-        mix += ((((int8_t) (scc->wave[i][scc->phase[i]]) * (int8_t) scc->volume[i]))) >> 4;
+      if(!(scc->mask & SCC_MASK_CH(i)))
+        scc->ch_out[i] += (scc->volume[i] * scc->wave[i][scc->phase[i]]) & 0xfff0;
     }
+
+    scc->ch_out[i] >>= 1;
   }
 
-  return (int16_t) (mix << 4);
+}
+
+static inline int16_t 
+mix_output(SCC * scc) {
+  scc->out = scc->ch_out[0] + scc->ch_out[1] + scc->ch_out[2] + scc->ch_out[3] + scc->ch_out[4];
+  return (int16_t)scc->out;
 }
 
 int16_t
 SCC_calc (SCC * scc)
 {
-  if (!scc->quality)
-    return calc (scc);
+  if (!scc->quality) {
+    update_output(scc);
+    return mix_output(scc);
+  }
 
   while (scc->realstep > scc->scctime)
   {
     scc->scctime += scc->sccstep;
-    scc->prev = scc->next;
-    scc->next = calc (scc);
+    update_output(scc);
   }
-
   scc->scctime -= scc->realstep;
-  scc->out = (int16_t) (((double) scc->next * (scc->sccstep - scc->scctime) + (double) scc->prev * scc->scctime) / scc->sccstep);
 
-  return (int16_t) (scc->out);
+  return mix_output(scc);
 }
 
 uint32_t

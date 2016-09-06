@@ -16,7 +16,7 @@ typedef struct __SCC {
 
   uint32_t clk, rate ,base_incr, quality ;
 
-  int32_t out, prev, next;
+  int16_t out;
   uint32_t type ;
   uint32_t mode ;
   uint32_t active;
@@ -45,6 +45,8 @@ typedef struct __SCC {
   int cycle_8bit ;
   int refresh ;
   int rotate[5] ;
+
+  int16_t ch_out[5] ;
 
 } SCC ;
 
